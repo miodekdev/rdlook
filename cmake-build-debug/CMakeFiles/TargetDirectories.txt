@@ -1,0 +1,3 @@
+C:/Users/maksy/Projects/rdlook/cmake-build-debug/CMakeFiles/rdlook.dir
+C:/Users/maksy/Projects/rdlook/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/maksy/Projects/rdlook/cmake-build-debug/CMakeFiles/rebuild_cache.dir
