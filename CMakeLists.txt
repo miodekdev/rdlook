@@ -3,5 +3,7 @@ project(rdlook)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(rdlook main.cpp)
+add_executable(rdlook main.cpp
+        args.cpp
+        args.h++)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
