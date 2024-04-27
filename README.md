@@ -1,3 +1,4 @@
+# RecursiveDirectoryLook
 **Usage:** `./rdlook.exe <phrase> [options]`
 
 Look for a phrase in filenames, directory names, and file contents within a directory or a file.
