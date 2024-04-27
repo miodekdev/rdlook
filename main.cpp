@@ -3,76 +3,67 @@
 #include <fstream>
 #include <string>
 
-#define ANSI_SWAP_COLORS "[7m"
-#define ANSI_BOLD "[1m"
-#define ANSI_RESET "[0m"
-
 using namespace std;
 
-filesystem::path root_path;
+filesystem::path main_path;
 string phrase;
 size_t total_matches = 0;
 
-void tryToFind(const filesystem::path& candidate) { // TODO count matches in name and display the amount
-    auto position = candidate.filename().string().find(phrase); // TODO fix "1 matches"
-    if (position != string::npos) {
-        position += candidate.parent_path().string().length();
+size_t findAll(const string& candidate) {
+    size_t matches = 0;
+    size_t position = 0;
+    while ((position = candidate.find(phrase, position)) != string::npos) {
+        matches++;
         total_matches++;
-        cout << ANSI_SWAP_COLORS << "match in name" << ANSI_RESET << " ";
-        cout << candidate.parent_path().string() << string(1, filesystem::path::preferred_separator);
-        cout << ANSI_BOLD << candidate.filename().string() << ANSI_RESET << endl;
+        position += phrase.length();
     }
+    return matches;
+}
+
+void tryToFind(const filesystem::path& candidate) {
+    size_t name_matches = findAll(candidate.string());
+    size_t contents_matches = 0;
     if (filesystem::is_regular_file(candidate)) {
         ifstream file(candidate);
         string line;
-        size_t matches = 0;
         while (getline(file, line)) {
-            position = 0;
-            while ((position = line.find(phrase, position)) != string::npos) {
-                matches++;
-                total_matches++;
-                position += phrase.length();
-            }
-        }
-        if (matches) {
-            cout << ANSI_SWAP_COLORS << to_string(matches) << " matches" << ANSI_RESET;
-            cout << " "<< candidate.string() << endl;
+            contents_matches += findAll(line);
         }
         file.close();
     }
-}
-
-void findOccurrences(const filesystem::path& path) {
-    tryToFind(path.string());
+    if (name_matches != string::npos || contents_matches) {
+        cout << "(" << (contents_matches ? to_string(contents_matches) : "name") << ") ";
+        cout << filesystem::relative(candidate, main_path).string() << endl;
+    }
 }
 
 int main(int argc, char *argv[]) {
+    cout << endl;
     switch (argc) {
         case 1:
             cerr << "No directory or file specified";
             return 1;
         case 2:
-            root_path = filesystem::current_path();
+            main_path = filesystem::current_path();
             phrase = argv[1];
             break;
         default:
-            root_path = filesystem::canonical(argv[1]);
+            main_path = argv[1];
             phrase = argv[2];
     }
-    if (filesystem::is_regular_file(root_path)) {
-        tryToFind(root_path);
+    if (filesystem::is_regular_file(main_path)) {
+        tryToFind(main_path);
     }
-    else if (filesystem::is_directory(root_path)) {
-        for (auto const& path : filesystem::recursive_directory_iterator(root_path)) {
+    else if (filesystem::is_directory(main_path)) {
+        for (auto const& path : filesystem::recursive_directory_iterator(main_path)) {
             tryToFind(path);
         }
     }
     else {
-        cerr << "\"" << root_path << "\" is not a valid directory or a file";
+        cerr << "\"" << main_path << "\" is not a valid directory or a file";
         return 1;
     }
-
-    cout << endl << "Found a total of " << ANSI_SWAP_COLORS << to_string(total_matches) << " match";
-    if (total_matches != 1) cout << "es" << ANSI_RESET << endl;
+    cout << endl << "Found " << to_string(total_matches);
+    cout << " match" << ((total_matches != 1) ? "es" : "") << "." << endl;
     return 0;
 }
