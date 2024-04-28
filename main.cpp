@@ -10,7 +10,7 @@ namespace arguments {
     string phrase;
     bool output = true;
     bool recursive = false;
-    bool format = false;
+    bool ansi_formatting = false;
 }
 
 namespace ansi {
@@ -58,30 +58,28 @@ void tryToFind(const filesystem::path& path) {
 int main(int argc, char *argv[]) {
     ArgumentParser argument_parser(argc, argv);
     cout << endl;
-    {
-        using namespace arguments;
+    {using namespace arguments;
         phrase = argument_parser.getArgument(0);
         main_path = argument_parser.getArgument("--path", "-p");
         output = !argument_parser.getFlag("--silent", "-s");
         recursive = argument_parser.getFlag("--recursive", "-r");
-        format = argument_parser.getFlag("--format", "-f");
+        ansi_formatting = argument_parser.getFlag("--format", "-f");
+
+        if (!ansi_formatting) {
+            using namespace ansi;
+            bold.clear();
+            highlight.clear();
+            reset.clear();
+        }
+
+        if (phrase.empty()) {
+            cerr << "No key phrase specified." << endl;
+            return 1;
+        }
     }
 
-    if (!arguments::format) {
-        using namespace ansi;
-        bold.clear();
-        highlight.clear();
-        reset.clear();
-    }
+    if (arguments::main_path.empty()) arguments::main_path = filesystem::current_path();
 
-    if (arguments::phrase.empty()) {
-        cerr << "No key phrase specified." << endl;
-        return 1;
-    }
-
-    if (arguments::main_path.empty()) {
-        arguments::main_path = filesystem::current_path();
-    }
     if (filesystem::is_directory(arguments::main_path)) {
         if (arguments::recursive) {
             for (auto const& path : filesystem::recursive_directory_iterator(arguments::main_path)) tryToFind(path);
