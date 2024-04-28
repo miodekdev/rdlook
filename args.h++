@@ -3,5 +3,13 @@
 
 using namespace std;
 
-string getArg(int argc, char* argv[], const string& long_option, const string& short_option);
-bool getFlag(int argc, char* argv[], const string& long_option, const string& short_option);
+class ArgumentParser {
+public:
+    ArgumentParser(int argc, char* argv[]);
+    string getArgument(size_t index);
+    string getArgument(const string& long_option, const string& short_option);
+    bool getFlag(const string& long_option, const string& short_option);
+private:
+    int argument_count;
+    char** arguments;
+};
