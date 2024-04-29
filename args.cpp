@@ -2,7 +2,7 @@
 
 ArgumentParser::ArgumentParser(int argc, char **argv) {
     argument_count = argc-1;
-    arguments = argv+1*sizeof(char);
+    arguments = argv+1;
 }
 
 string ArgumentParser::getArgument(size_t index) {

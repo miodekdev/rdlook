@@ -56,20 +56,19 @@ void tryToFind(const filesystem::path& path) {
 }
 
 int main(int argc, char *argv[]) {
-    ArgumentParser argument_parser(argc, argv);
+    ArgumentParser parser(argc, argv);
     cout << endl;
     {using namespace arguments;
-        phrase = argument_parser.getArgument(0);
-        main_path = argument_parser.getArgument("--path", "-p");
-        output = !argument_parser.getFlag("--silent", "-s");
-        recursive = argument_parser.getFlag("--recursive", "-r");
-        ansi_formatting = argument_parser.getFlag("--format", "-f");
+        phrase = parser.getArgument(0);
+        main_path = parser.getArgument("/path", "/p");
+        output = !parser.getFlag("/silent", "/s");
+        recursive = parser.getFlag("/recursive", "/r");
+        ansi_formatting = parser.getFlag("/format", "/f");
 
         if (!ansi_formatting) {
-            using namespace ansi;
-            bold.clear();
-            highlight.clear();
-            reset.clear();
+            ansi::bold.clear();
+            ansi::highlight.clear();
+            ansi::reset.clear();
         }
 
         if (phrase.empty()) {
@@ -93,7 +92,7 @@ int main(int argc, char *argv[]) {
         tryToFind(arguments::main_path);
     }
     else {
-        cerr << "\"" << arguments::main_path << "\" is not a valid directory or a file." << endl;
+        cerr << arguments::main_path << " is not a valid directory or a file." << endl;
         return 1;
     }
 
