@@ -1,9 +1,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 #include "args.h++"
-
-size_t total_matches = 0;
 
 namespace arguments {
     filesystem::path main_path;
@@ -12,22 +11,32 @@ namespace arguments {
     bool recursive = false;
     bool ansi_formatting = false;
 }
-
 namespace ansi {
     string bold = "\033[1m";
     string highlight = "\033[7m";
     string reset = "\033[0m";
 }
 
-size_t findAll(string& path) {
-    size_t matches = 0;
-    size_t position = 0;
-    while ((position = path.find(arguments::phrase, position)) != string::npos) {
-        matches++;
-        total_matches++;
-        position += arguments::phrase.length();
+size_t total_matches = 0;
+
+vector<size_t> findAll(const string& path) {
+    vector<size_t> positions;
+    size_t current_position = 0;
+    while ((current_position = path.find(arguments::phrase, current_position)) != string::npos) {
+        positions.push_back(current_position);
+        current_position += arguments::phrase.length();
     }
-    return matches;
+    total_matches += positions.size();
+    return positions;
+}
+
+void highlight(string& str, const vector<size_t>& positions) {
+    size_t offset = 0;
+    for (auto position : positions) {
+        str.insert(position+arguments::phrase.length()+offset, ansi::reset);
+        str.insert(position+offset, ansi::highlight);
+        offset += ansi::reset.length() + ansi::highlight.length();
+    }
 }
 
 void tryToFind(const filesystem::path& path) {
@@ -35,20 +44,17 @@ void tryToFind(const filesystem::path& path) {
     if (filesystem::is_regular_file(path)) {
         ifstream file(path);
         string line;
-        while (getline(file, line)) {
-            matches += findAll(line);
-        }
+        while (getline(file, line)) matches += findAll(line).size();
         file.close();
     }
 
     string filename = path.filename().string();
-    size_t highlight_position = filename.find(arguments::phrase);
+    vector<size_t> highlight_positions = findAll(filename);
     string parent = filesystem::relative(path, arguments::main_path).parent_path().string();
-    if ((highlight_position != string::npos || matches) && arguments::output) {
+    if ((!highlight_positions.empty() || matches) && arguments::output) {
         if (matches) cout << ansi::bold << "(" << to_string(matches) << ")" << ansi::reset << " ";
-        if (highlight_position != string::npos) {
-            filename.insert(highlight_position + arguments::phrase.length(), ansi::reset);
-            filename.insert(highlight_position, ansi::highlight);
+        if (!highlight_positions.empty()) {
+            highlight(filename, highlight_positions);
         }
         if (!parent.empty()) cout << parent << "\\";
         cout << filename << endl;
@@ -56,9 +62,10 @@ void tryToFind(const filesystem::path& path) {
 }
 
 int main(int argc, char *argv[]) {
-    ArgumentParser parser(argc, argv);
     cout << endl;
+
     {using namespace arguments;
+        ArgumentParser parser(argc, argv);
         phrase = parser.getArgument(0);
         main_path = parser.getArgument("/path", "/p");
         output = !parser.getFlag("/silent", "/s");
@@ -96,6 +103,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    cout << "Total occurrences in file contents: " << ansi::bold << to_string(total_matches) << ansi::reset << endl;
+    cout << "Total occurrences: " << ansi::bold << to_string(total_matches) << ansi::reset << endl;
     return 0;
 }
